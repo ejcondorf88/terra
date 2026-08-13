@@ -1,109 +1,252 @@
 # TERRA LINK
 
-Rediseño de TERRA LINK como plataforma de tokenización agrícola con NFTs financieros robustos. Este repositorio contiene la arquitectura inicial y los componentes clave para backend, contratos inteligentes y despliegue en infraestructura.
+Plataforma de **tokenización agrícola con NFTs financieros** y cumplimiento EUDR. Conecta trazabilidad de campo (IoT + satélite) con crédito, billing (Stripe) y alertas ESG.
 
-## 📖 Índice de documentación
+| Capa | Tecnología | Puerto |
+|---|---|---|
+| Backend | NestJS 11 + TypeORM + PostgreSQL/PostGIS | `3000` |
+| Frontend (dashboard web) | Vite 5 + React 18 + Chart.js + Socket.IO | `5173` (dev) / `8080` (Docker) |
+| Base de datos | postgis/postgis:15-3.3 (Docker) | `5432` |
+| WebSocket | Socket.IO namespace `/credit` | `3000` |
 
-**🗺️ [MAPA DEL PROYECTO (empieza aquí – 5 min)](./docs/PROJECT-MAP.md)** – Vista rápida visual de todo
+---
 
-**Comienza aquí según tu rol:**
+## ⚡ ARRANQUE RÁPIDO — comandos copia y pega (PowerShell)
 
-1. **[QUICKSTART.md](./docs/QUICKSTART.md)** ← **Acceso rápido por rol (comandos VS Code)**
-2. **[INDEX.md](./docs/INDEX.md)** ← **Índice maestro (búsqueda y referencias cruzadas)**
+> Todos los comandos se corren desde la raíz del monorepo:
+> `C:\Users\usuario\Desktop\TERRA EUDR_TOKEN_WALLET (1)\TERRA EUDR_TOKEN_WALLET`
 
-### Para ejecutivos y stakeholders
-- **[Resumen ejecutivo (1 página)](./docs/EXECUTIVE-SUMMARY.md)** – Estado, oportunidades, timeline, ROI
-- **[Mapa del proyecto (visual)](./docs/PROJECT-MAP.md)** – Vista general en 5 minutos
+### Paso 1 — Base de datos (Docker)
 
-### Para arquitectos y tech leads
-- **[Análisis de ingeniería](./docs/engineering-analysis.md)** – Estado actual, brechas, roadmap técnico
-- **[Diagrama C4 nivel 2](./docs/architecture-c4-level2.md)** – Arquitectura con módulos propuestos
-- **[Plan de desarrollo](./docs/roadmap-implementation.md)** – 3 sprints, 11 issues priorizados
-- **[Mapa del proyecto (visual)](./docs/PROJECT-MAP.md)** – Overview de alto nivel
-
-### Para desarrolladores
-- **[Guía de desarrollo](./docs/development-guide.md)** – Setup local, tareas VS Code
-- **[Documentación técnica](./docs/terra-link-technical.md)** – Endpoints, módulos, entities
-- **[API reference](./docs/api-reference.md)** – Ejemplos de uso
-- **[Mapa del proyecto (visual)](./docs/PROJECT-MAP.md)** – Arquitectura en diagrama
-
-- **IoT Alerts API** – Endpoints y ejemplos en [Guía de testing](./docs/testing-guide.md#iot-alerts-api)
-
-### Para QA y testing
-- **[Plan de pruebas](./docs/qa-test-plan.md)** – 30+ casos de prueba
-- **[Guía de testing](./docs/testing-guide.md)** – Estrategia unitarios/e2e
-
-### Estado de documentación
-- **[Estado completo](./docs/DOCUMENTATION-STATUS.md)** – 18 documentos, cobertura 100%
-- **[Resumen de completud](./docs/COMPLETION-SUMMARY.md)** – Qué se hizo, qué sigue
-
-### Documentos principales
-
-
-```bash
-# Ejecutar script automatizado
-start.bat
+```powershell
+cd "TERRA LINK"
+docker-compose up -d postgres
 ```
 
-### Inicio manual
-```bash
-cd backend
+### Paso 2 — Instalar dependencias
+
+```powershell
+# 2a. Paquete compartido @terra/shared (OBLIGATORIO: el backend depende de su dist/)
+cd packages\shared
+npm install
+npm run build
+
+# 2b. Backend
+cd ..\..\TERRA LINK\backend
+npm install
+Copy-Item .env.example .env   # crear .env (valores por defecto funcionan)
+npm run migration:run         # crear las tablas (synchronize:false = las tablas NO se crean solas)
+
+# 2c. Frontend (dashboard)
+cd ..\frontend
 npm install
 ```
 
-### 2. Levantar la base de datos
-```bash
-# Desde la raíz del proyecto
-docker-compose up -d
-```
+### Paso 3 — Levantar backend (Terminal 1)
 
-### 3. Configurar variables de entorno
-```bash
-cd backend
-cp .env.example .env
-# Editar .env si es necesario (valores por defecto funcionan)
-```
-
-### 4. Ejecutar el backend
-```bash
-cd backend
+```powershell
+cd "TERRA LINK\backend"
 npm run start:dev
 ```
 
-### 5. Verificar funcionamiento
-```bash
-# Ejecutar pruebas automatizadas
-node test-api.js
+✅ Backend en `http://localhost:3000` · WebSocket en `ws://localhost:3000/credit`
+
+### Paso 4 — Levantar dashboard (Terminal 2)
+
+```powershell
+cd "TERRA LINK\frontend"
+npm run dev
 ```
 
-- API disponible en `http://localhost:3000`
-- Base de datos en `localhost:5432`
-- Datos de prueba incluidos
+✅ Dashboard en `http://localhost:5173`
+
+### Paso 5 — Crear usuario de login (el dashboard NO arranca sin esto)
+
+El `init.sql` solo siembra plots y certificaciones — **NO crea tenants ni users**. El login verifica el password con SHA-256. Ejecuta esto en una terminal:
+
+```powershell
+docker exec -it terra-link-db psql -U postgres -d terra_link
+```
+
+Y pega dentro de psql:
+
+```sql
+INSERT INTO tenants (name, domain, sector, contact_email, created_at, updated_at)
+VALUES ('Demo Agro', 'demo.terra.com', 'Agricultura', 'admin@demo.com', NOW(), NOW());
+
+INSERT INTO users (tenant_id, username, email, password_hash, role, is_active, created_at, updated_at)
+VALUES (1, 'admin', 'admin@demo.com',
+        '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',  -- "admin123"
+        'admin', true, NOW(), NOW());
+```
+
+Luego en el dashboard: **Tenant ID `1` · Usuario `admin` · Contraseña `admin123`**
+
+> ¿Otro password? Genera el hash: `node -e "console.log(require('crypto').createHash('sha256').update('tuPassword').digest('hex'))"`
+
+---
+
+## ⚠️ BLOQUEANTE DE DESARROLLO: CORS
+
+El backend **NO tiene `enableCors()`**. El dashboard en `5173` llama al backend en `3000` con `fetch` → **el navegador bloquea TODAS las llamadas HTTP** (login incluido).
+
+**Fix (1 línea)** en `TERRA LINK\backend\src\main.ts`:
+
+```ts
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.enableCors({ origin: true });   // ← AGREGAR ESTA LÍNEA
+  app.use(bodyParser.json({ verify: (req: any, _res, buf) => { req.rawBody = buf; } }));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  await app.listen(3000);
+}
+```
+
+> Alternativa sin tocar backend: definir `VITE_BACKEND_URL` y configurar proxy en `vite.config.ts`. Pero como el código usa la URL absoluta `BACKEND` en ~15 llamadas, `enableCors` es el cambio mínimo.
+
+---
+
+## 🐳 Arranque con Docker (backend manual + frontend en nginx)
+
+```powershell
+cd "TERRA LINK"
+docker-compose up -d
+
+# Postgres  -> localhost:5432
+# Frontend  -> http://localhost:8080  (nginx con el build de Vite)
+```
+
+> El docker-compose NO levanta el backend: solo `postgres` y `frontend`. El backend se corre con `npm run start:dev` desde `backend\`.
+
+---
+
+## 📦 Estructura y comandos por subproyecto
+
+### Backend (`backend\`) — NestJS 11
+
+```powershell
+cd "TERRA LINK\backend"
+npm install                # instalar deps
+npm run start:dev          # dev con watch (localhost:3000)
+npm run start              # producción
+npm run build              # compilar a dist/
+npm run migration:run      # aplicar migraciones TypeORM
+npm run migration:revert   # revertir última migración
+npm test                   # unitarios (Jest)
+npm run test:e2e           # e2e (Supertest)
+npm run test:cov           # cobertura
+```
+
+**Variables de entorno** (`backend\.env`, copia de `.env.example`):
+
+| Variable | Default | Uso |
+|---|---|---|
+| `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` | `localhost` / `5432` / `postgres` / `postgres` / `terra_link` | PostgreSQL |
+| `GUI_API_URL` / `GUI_API_KEY` | AGROCALIDAD sandbox | Compliance |
+| `MAG_API_URL` / `MAG_API_TOKEN` | MAG sandbox | Ministerio Agricultura |
+| `TRACES_API_URL` / `TRACES_API_KEY` | UE sandbox | Trazabilidad UE |
+| `SATELLITE_API_URL` / `SATELLITE_API_KEY` | sandbox | Validación satelital |
+| `OPENWEATHER_API_KEY` | *(vacío)* | Datos climáticos |
+| `IOT_ALERT_NOTIFICATION_WEBHOOK_URL` / `SLACK_WEBHOOK_URL` | *(vacío)* | Webhooks IoT |
+| `IOT_ALERT_NOTIFICATION_MIN_SEVERITY` | `high` | Umbral |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | *(vacío)* | Email |
+
+### Frontend (`frontend\`) — Vite + React 18
+
+```powershell
+cd "TERRA LINK\frontend"
+npm install            # instalar deps
+npm run dev            # dev server → http://localhost:5173
+npm run build          # build de producción → dist/
+npm run preview        # previsualizar el build
+```
+
+El dashboard usa `VITE_BACKEND_URL || 'http://localhost:3000'`. Backend en otro puerto:
+
+```powershell
+$env:VITE_BACKEND_URL="http://localhost:3000"; npm run dev
+```
+
+---
+
+## 📡 Endpoints principales (backend `localhost:3000`)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/auth/login` | Login `{ tenant_id, username, password }` → JWT |
+| POST | `/credit-smart-contract/collateralize` | Colateralizar NFT |
+| POST | `/credit-smart-contract/release` | Liberar colateral |
+| GET | `/credit-smart-contract/metrics` | Métricas del dashboard |
+| GET | `/credit-smart-contract/risk-limit/:tokenId` | Límite de riesgo |
+| GET | `/credit/dynamic/:tokenId` | Valoración dinámica |
+| POST | `/credit/evaluate/:tokenId` | Evaluar crédito |
+| GET | `/credit/proposals/:borrowerId` | Propuestas por deudor |
+| PATCH | `/credit/proposal/:id/status` | Estado de propuesta |
+| POST | `/tenants` | Crear tenant |
+| GET | `/tenants/:id` | Detalle tenant |
+| GET/PUT | `/tenants/:tenantId/notification-settings` | Config. notificaciones |
+| POST | `/users` | Crear usuario (admin) |
+| GET | `/users` · PATCH `/users/:userId/role` · DELETE `/users/:userId` | Gestión usuarios |
+| POST | `/billing/subscribe` · `/billing/charge` · `/billing/cancel` · `/billing/webhook` | Stripe |
+| GET | `/billing/account` · `/billing/invoices` | Estado y facturas |
+| POST | `/compliance/eudr` | Registrar trazabilidad EUDR |
+| GET | `/compliance/eudr/:traceId` | Consultar EUDR |
+| POST | `/compliance/eudr/:traceId/sync` | Sincronizar |
+| POST | `/compliance/satellite-validation` · `/compliance/esg-reports` | Validación / ESG |
+| GET | `/compliance/alerts-dashboard` | Alertas ESG (dashboard) |
+| POST | `/certifications` · GET `/certifications` · GET `/certifications/:id` | Certificaciones |
+| POST | `/iot/readings` · `/iot/drones` | IoT |
+| GET | `/iot/alerts` · PATCH `/iot/alerts/:id/resolve` | Alertas IoT |
+| GET/PUT | `/iot/notifications/settings` · GET `/iot/notifications/logs` | Notificaciones |
+| POST | `/geo/validate` | Validación PostGIS |
+| POST | `/plots` · GET `/plots/:id` · GET `/plots/owner/:ownerId` | Parcelas |
+| POST | `/nfts` · PATCH `/nfts/:id` · GET `/nfts/:id` · PATCH `/nfts/:id/collateralize` | NFTs |
+
+**WebSocket**: namespace `/credit` (socket.io) — emite métricas en vivo.
+
+---
+
+## 🛠️ Troubleshooting
+
+| Problema | Causa | Solución |
+|---|---|---|
+| `ECONNREFUSED` puerto 5432 | Postgres apagado | `docker-compose up -d postgres` |
+| `relation "users" does not exist` | Migraciones pendientes | `cd backend; npm run migration:run` |
+| Login "Invalid credentials" | No creaste el user / hash malo | Ejecutar INSERT del Paso 5 |
+| CORS error en dashboard | Backend sin enableCors | Ver sección ⚠️ CORS |
+| `Cannot find module '@terra/shared'` | Shared sin compilar | `cd packages\shared; npm run build` |
+| Dashboard sin datos de billing | No hay `billing_accounts` | `POST /billing/subscribe` o SQL |
+| WebSocket no conecta | Backend apagado / otro puerto | Verificar backend en 3000 |
+
+---
+
+## 📚 Documentación completa
+
+- **🗺️ [MAPA DEL PROYECTO (empieza aquí)](./docs/PROJECT-MAP.md)** — vista rápida
+- **[QUICKSTART.md](./docs/QUICKSTART.md)** — acceso por rol (VS Code)
+- **[INDEX.md](./docs/INDEX.md)** — índice maestro
+- **[Resumen ejecutivo](./docs/EXECUTIVE-SUMMARY.md)** — stakeholders
+- **[Análisis de ingeniería](./docs/engineering-analysis.md)** — arquitectos
+- **[Diagrama C4 nivel 2](./docs/architecture-c4-level2.md)** — arquitectura
+- **[Plan de desarrollo](./docs/roadmap-implementation.md)** — 3 sprints
+- **[Guía de desarrollo](./docs/development-guide.md)** — setup local
+- **[Documentación técnica](./docs/terra-link-technical.md)** — endpoints/entidades
+- **[API reference](./docs/api-reference.md)** — ejemplos
+- **[Plan de pruebas](./docs/qa-test-plan.md)** — 30+ casos
+- **[Guía de testing](./docs/testing-guide.md)** — estrategia
+- **[Estado de documentación](./docs/DOCUMENTATION-STATUS.md)** — 18 docs
 
 ## Componentes
 
-- `backend/`: NestJS API modular con soporte para geolocalización, NFTs y créditos.
-- `contracts/`: Solidity NFT avanzado para tokenización y collateralización.
-- `terraform/`: Plantilla inicial para desplegar infraestructura en AWS.
-- `docs/engineering-analysis.md`: Análisis completo de ingeniería y arquitectura actual.
-- `docs/roadmap-implementation.md`: Plan de desarrollo en sprints con issues priorizados.
-- `docs/architecture-c4-level2.md`: Diagrama C4 nivel 2 con módulos propuestos.
-- `docs/terra-link-technical.md`: Documentación técnica principal para VS Code.
-- `docs/terra-ecosystem.md`: Documentación de plataforma AG TECH EC y arquitectura integrada.
-- `docs/api-cost-model.md`: APIs clave, costos y modelo de planes para TERRA LINK.
-- `docs/qa-guide.md`: Guía de Quality Assurance y estrategia de pruebas.
-- `docs/qa-test-plan.md`: Casos de prueba detallados con inputs/outputs.
-- `docs/testing-guide.md`: Guía práctica de pruebas y validación del proyecto.
-
-## Diagrama de arquitectura
-
-- [Ver diagrama optimizado de TERRA LINK](https://copilot.microsoft.com/th/id/BCO.dfa38011-b11e-4503-b9e4-f1e7bf328978.png)
-- [C4 Nivel 2 – Arquitectura propuesta con nuevos módulos](./docs/architecture-c4-level2.md)
-- [Análisis de Ingeniería y Arquitectura](./docs/engineering-analysis.md)
+- `backend/`: NestJS API modular (auth, tenants, credit, billing, compliance, IoT, geo, NFTs).
+- `frontend/`: Dashboard web (Vite + React 18) con login, billing, métricas, alertas ESG y WebSocket.
+- `contracts/`: Hardhat + Solidity NFT (tokenización y colateralización).
+- `terraform/`: Plantilla AWS.
+- `init.sql`: Seed inicial (plots/certificaciones/historial) en el primer arranque de Postgres.
 
 ## Siguientes pasos
 
 1. Implementar validación geoespacial con PostGIS.
 2. Completar endpoints de tokenización y flujo de crédito.
 3. Desarrollar auditoría dinámica de NFTs con IoT / satélite.
-4. Desplegar la infraestructura cloud usando EKS y Terraform.
+4. Desplegar infraestructura cloud con EKS y Terraform.
