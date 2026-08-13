@@ -1,0 +1,42 @@
+{
+  "name": "terra-ecosystem",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Metaworkspace para TERRA GO, TERRA LINK y TERRA X CHANGE.",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "TERRA GO/backend",
+    "TERRA GO/frontend",
+    "TERRA GO/contracts",
+    "TERRA LINK",
+    "TERRA LINK/backend",
+    "TERRA LINK/frontend",
+    "packages/shared"
+  ],
+  "scripts": {
+    "bootstrap": "npm install",
+    "postinstall": "npm run -w @terra/shared build",
+    "test": "npm run test:terra-go && npm run test:terra-link",
+    "test:terra-go": "npm --workspace terra-go-backend test && npm --workspace terra-go-frontend test && npm --workspace terra-go-contracts test",
+    "test:terra-link": "npm --workspace terra-link-backend test && npm --workspace terra-link-dashboard test && npm --workspace terra-link run test:hardhat",
+    "test:coverage": "npm run test:coverage:terra-go && npm run test:coverage:terra-link",
+    "test:coverage:terra-go": "npm --workspace terra-go-backend run test:cov",
+    "test:coverage:terra-link": "npm --workspace terra-link run test:all",
+    "test:e2e": "node tests/e2e/jwt-rbac.example.ts",
+    "test:e2e:perf": "node tests/e2e/performance.example.ts",
+    "test:e2e:wallet-login-stake": "node tests/e2e/wallet/login-stake.example.ts",
+    "test:wallet-finance": "jest tests/unit/stake.repository.spec.ts --runInBand",
+    "lint": "npm --workspace terra-go-backend run lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "jest": "^30.0.0",
+    "class-validator": "^0.15.0",
+    "class-transformer": "^0.5.1"
+  }
+}

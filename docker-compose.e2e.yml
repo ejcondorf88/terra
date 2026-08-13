@@ -1,0 +1,171 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: terra_postgres_e2e
+    environment:
+      POSTGRES_USER: terra_user
+      POSTGRES_PASSWORD: terra_password
+      POSTGRES_DB: terra_e2e
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_e2e:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terra_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - terra_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: terra_redis_e2e
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - terra_network
+
+  # Placeholder for TERRA GO backend
+  backend_go:
+    build:
+      context: "./TERRA GO/backend"
+      dockerfile: Dockerfile
+    container_name: terra_go_backend_e2e
+    environment:
+      DATABASE_URL: postgresql://terra_user:terra_password@postgres:5432/terra_e2e
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: e2e_test_secret
+      NODE_ENV: test
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - terra_network
+
+  # Placeholder for TERRA LINK backend
+  backend_link:
+    build:
+      context: "./TERRA LINK/backend"
+      dockerfile: Dockerfile
+    container_name: terra_link_backend_e2e
+    environment:
+      DATABASE_URL: postgresql://terra_user:terra_password@postgres:5432/terra_e2e
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: e2e_test_secret
+      NODE_ENV: test
+    ports:
+      - "3001:3000"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - terra_network
+
+  # Placeholder for TERRA X CHANGE backend
+  backend_xchange:
+    build:
+      context: "./TERRA X CHANGE/backend"
+      dockerfile: Dockerfile
+    container_name: terra_xchange_backend_e2e
+    environment:
+      DATABASE_URL: postgresql://terra_user:terra_password@postgres:5432/terra_e2e
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: e2e_test_secret
+      NODE_ENV: test
+    ports:
+      - "3002:3000"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - terra_network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: terra_prometheus_e2e
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data_e2e:/prometheus
+    depends_on:
+      - backend_xchange
+      - backend_go
+      - backend_link
+    networks:
+      - terra_network
+
+  # Alertmanager for alert routing (optional, requires SLACK_WEBHOOK_URL env var)
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: terra_alertmanager_e2e
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data_e2e:/alertmanager
+    environment:
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-http://localhost:5001}  # Default to null receiver
+    networks:
+      - terra_network
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: terra_grafana_e2e
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_INSTALL_PLUGINS=
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data_e2e:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - terra_network
+
+volumes:
+  postgres_data_e2e:
+  prometheus_data_e2e:
+  alertmanager_data_e2e:
+  grafana_data_e2e:
+
+networks:
+  terra_network:
+    driver: bridge

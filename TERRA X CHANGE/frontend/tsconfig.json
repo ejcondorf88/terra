@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@terra/shared": ["../../packages/shared/src"],
+      "@terra/shared/*": ["../../packages/shared/src/*"]
+    }
+  }
+}

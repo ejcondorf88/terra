@@ -1,0 +1,47 @@
+# Prometheus configuration for TERRA ecosystem monitoring
+# Place this file at the root: ./prometheus.yml
+# Run with: docker run -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'terra-monitor'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - 'alert_rules.yml'
+
+# Scrape configurations
+scrape_configs:
+  # TERRA X CHANGE Wallet Backend
+  - job_name: 'terra-xchange'
+    static_configs:
+      - targets: ['localhost:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # TERRA GO Backend (optional)
+  - job_name: 'terra-go'
+    static_configs:
+      - targets: ['localhost:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # TERRA LINK Backend (optional)
+  - job_name: 'terra-link'
+    static_configs:
+      - targets: ['localhost:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Prometheus itself (for monitoring Prometheus)
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

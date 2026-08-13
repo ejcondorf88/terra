@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@terra/shared": ["../../packages/shared/src"],
+      "@terra/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "files": ["./hardhat.config.cts"]
+}

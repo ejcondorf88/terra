@@ -1,0 +1,29 @@
+{
+  "name": "terra-link",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:backend && npm run test:hardhat",
+    "test:backend": "npm --prefix backend test",
+    "test:hardhat": "npx hardhat test",
+    "test:backend:cov": "npm --prefix backend run test:cov",
+    "test:hardhat:cov": "npx hardhat coverage",
+    "combine-coverage": "if not exist coverage\\combined mkdir coverage\\combined && istanbul-combine -d coverage/combined -p both -r lcov -r html backend/coverage/lcov.info coverage/lcov.info",
+    "test:all": "npm run test:backend:cov && npm run test:hardhat:cov && npm run combine-coverage",
+    "compile:hardhat": "npx hardhat compile"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@openzeppelin/contracts": "^4.9.3",
+    "chai": "^4.3.8",
+    "ethers": "^6.12.0",
+    "hardhat": "^2.18.0",
+    "istanbul-combine": "^0.3.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.5.0"
+  }
+}

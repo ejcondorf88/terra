@@ -1,0 +1,81 @@
+name: Coverage Consolidation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Install workspace dependencies
+        run: npm install
+      - name: Build shared package
+        run: npm run -w @terra/shared build
+      - name: Run workspace coverage tests
+        run: |
+          # Execute coverage-aware scripts across workspaces where supported
+          npm run test:coverage || true
+      - name: Combine coverage reports (if available)
+        run: |
+          echo "Searching for lcov.info files to combine..."
+          FILES=$(find . -type f -name 'lcov.info' -print | tr '\n' ' ')
+          if [ -n "$FILES" ]; then
+            echo "Found coverage files: $FILES"
+            if command -v npx >/dev/null 2>&1; then
+              npx istanbul-combine -d coverage/combined -p both $FILES || true
+            else
+              echo "npx not available; skipping istanbul-combine"
+            fi
+          else
+            echo "No lcov.info files found; skipping combine"
+          fi
+
+      - name: Generate combined HTML coverage report
+        run: |
+          if [ -d "coverage/combined" ] && [ -f "coverage/combined/lcov.info" ]; then
+            npx nyc report --reporter=html --reporter=text-summary --report-dir=coverage/combined/html < coverage/combined/lcov.info || true
+            echo "Combined coverage HTML generated at coverage/combined/html/"
+          else
+            echo "No combined lcov.info found; individual workspace coverage available"
+          fi
+        continue-on-error: true
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-artifacts
+          path: |
+            **/coverage/**
+            **/coverage-final.json
+            **/lcov.info
+            coverage/combined/html/
+
+      - name: Upload combined coverage report as separate artifact
+        if: hashFiles('coverage/combined/html/index.html') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-html
+          path: coverage/combined/html/
+          retention-days: 30
+        continue-on-error: true
+
+      - name: Upload Pages artifact (coverage)
+        if: github.ref == 'refs/heads/main' && hashFiles('coverage/combined/html/index.html') != ''
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: coverage/combined/html
+
+      - name: Deploy combined coverage to GitHub Pages
+        if: github.ref == 'refs/heads/main' && hashFiles('coverage/combined/html/index.html') != ''
+        uses: actions/deploy-pages@v1

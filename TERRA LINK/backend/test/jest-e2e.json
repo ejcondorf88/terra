@@ -1,0 +1,22 @@
+{
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@terra/shared/auth$": "<rootDir>/../src/test/mocks/terra-shared-auth.ts",
+    "^src/(.*)$": "<rootDir>/src/$1"
+  },
+  "globals": {
+    "ts-jest": {
+      "tsconfig": "tsconfig.spec.json"
+    }
+  }
+}

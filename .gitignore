@@ -1,0 +1,85 @@
+# ============================================================
+# TERRA ECOSYSTEM — Monorepo root .gitignore
+# Un solo repo en la raíz. Nada regenerable ni sensible sube.
+# ============================================================
+
+# ---------- Dependencies ----------
+node_modules/
+**/node_modules/
+
+# ---------- Lockfiles (el usuario reinstala manualmente) ----------
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+npm-shrinkwrap.json
+*.frozen
+*.lock
+
+# ---------- Builds / artefactos regenerables ----------
+dist/
+**/dist/
+build/
+**/build/
+.next/
+**/.next/
+.expo/
+**/.expo/
+out/
+**/out/
+
+# ---------- Cobertura de tests ----------
+coverage/
+**/coverage/
+coverage.json
+contracts-coverage
+lcov.info
+*.lcov
+.nyc_output/
+**/.nyc_output/
+
+# ---------- Hardhat / Solidity ----------
+artifacts/
+**/artifacts/
+cache/
+**/cache/
+typechain-types/
+**/typechain-types/
+coverage/
+**/coverage/
+gas-report.txt
+
+# ---------- TypeScript ----------
+*.tsbuildinfo
+*.tsbuildinfo.*
+
+# ---------- Secrets / entorno ----------
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# ---------- SGBD / datos locales ----------
+*.sqlite
+*.sqlite3
+*.db
+
+# ---------- Logs y temp ----------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# ---------- IDE / OS ----------
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/
+*.suo
+*.user

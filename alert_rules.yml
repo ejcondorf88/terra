@@ -1,0 +1,105 @@
+# Prometheus alerting rules for TERRA Business Metrics
+# Load in prometheus.yml with: rule_files: ['alert_rules.yml']
+
+groups:
+  - name: business_alerts
+    interval: 30s
+    rules:
+      # Credit Approval Metrics
+      - alert: LowCreditApprovalRate
+        expr: (credit_approved_total / credit_requested_total) < 0.7
+        for: 5m
+        labels:
+          severity: warning
+          team: finance
+        annotations:
+          summary: "Credit approval rate below 70%"
+          description: "Approval rate is {{ $value | humanizePercentage }}. Check credit underwriting engine."
+
+      - alert: CriticalCreditApprovalRate
+        expr: (credit_approved_total / credit_requested_total) < 0.5
+        for: 2m
+        labels:
+          severity: critical
+          team: finance
+        annotations:
+          summary: "CRITICAL: Credit approval rate below 50%"
+          description: "Approval rate dropped to {{ $value | humanizePercentage }}. Emergency review needed."
+
+      # Performance Metrics
+      - alert: HighEndpointLatency
+        expr: endpoint_latency_ms_p99 > 500
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High endpoint latency detected"
+          description: "P99 latency is {{ $value }}ms. Check backend performance."
+
+      - alert: CriticalEndpointLatency
+        expr: endpoint_latency_ms_p99 > 1000
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "CRITICAL: Endpoint latency exceeds 1 second"
+          description: "P99 latency is {{ $value }}ms. Immediate action required."
+
+      # Staking Metrics
+      - alert: LowStakingActivity
+        expr: rate(stake_created_total[1h]) < 0.5
+        for: 1h
+        labels:
+          severity: info
+          team: product
+        annotations:
+          summary: "Low staking activity"
+          description: "Stake creation rate is {{ $value }} per minute. Consider incentive review."
+
+      # User Onboarding
+      - alert: SlowUserOnboarding
+        expr: rate(user_onboarded_total[1h]) < 1
+        for: 2h
+        labels:
+          severity: warning
+          team: product
+        annotations:
+          summary: "User onboarding rate below target"
+          description: "Onboarding rate is {{ $value }} per minute. Review funnel."
+
+      # Login Failures (approximated by count)
+      - alert: HighLoginFailureRate
+        expr: rate(login_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High login attempt rate detected"
+          description: "Login attempts: {{ $value }} per second. Check for brute-force attacks."
+
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      # Prometheus itself
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: infra
+        annotations:
+          summary: "Prometheus target is down"
+          description: "Target {{ $labels.job }} at {{ $labels.instance }} is down for 2+ minutes."
+
+      - alert: PrometheusHighMemory
+        expr: process_resident_memory_bytes > 1073741824  # 1GB
+        for: 5m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "Prometheus memory usage high"
+          description: "Memory usage is {{ humanize $value }} bytes."

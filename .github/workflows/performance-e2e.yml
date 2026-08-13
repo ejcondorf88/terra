@@ -1,0 +1,59 @@
+name: Performance E2E
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  perf-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install
+
+      - name: Build shared package
+        run: npm run -w @terra/shared build
+
+      - name: Start infrastructure (Postgres, Redis)
+        run: docker-compose -f docker-compose.e2e.yml up -d postgres redis
+
+      - name: Build and start backends
+        run: docker-compose -f docker-compose.e2e.yml up -d backend_go backend_link backend_xchange
+
+      - name: Wait for backend health
+        run: |
+          echo "Waiting for backend to respond on http://localhost:3000/health"
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/health >/dev/null 2>&1; then
+              echo "backend ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "backend did not become healthy in time"
+          exit 1
+
+      - name: Run performance E2E
+        run: |
+          npm run test:e2e:perf
+
+      - name: Tear down infrastructure
+        if: always()
+        run: docker-compose -f docker-compose.e2e.yml down -v
+
+      - name: Notify Teams on failure
+        if: ${{ failure() && secrets.TEAMS_WEBHOOK_URL != '' }}
+        run: |
+          echo "Sending Teams notification..."
+          PAYLOAD=$(jq -n --arg title "TERRA CI - Performance E2E Failure" \
+            --arg text "Performance E2E job failed for $GITHUB_REPOSITORY on ref $GITHUB_REF. See run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '{title: $title, text: $text}')
+          curl -s -H 'Content-Type: application/json' -d "$PAYLOAD" "${{ secrets.TEAMS_WEBHOOK_URL }}" || true

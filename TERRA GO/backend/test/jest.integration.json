@@ -1,0 +1,13 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": "tests/integration/.*\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "tsconfig.json" }]
+  },
+  "moduleNameMapper": {
+    "^@terra/shared/(.*)$": "<rootDir>/../../packages/shared/src/$1",
+    "^@terra/shared$": "<rootDir>/../../packages/shared/src/index.ts"
+  }
+}

@@ -1,0 +1,98 @@
+# Alertmanager configuration for TERRA Ecosystem
+# Place at ./alertmanager.yml
+# Run with: docker run -p 9093:9093 -v $(pwd)/alertmanager.yml:/etc/alertmanager/alertmanager.yml prom/alertmanager
+
+global:
+  resolve_timeout: 5m
+  slack_api_url: '${SLACK_WEBHOOK_URL}'  # Set via environment variable
+
+# The root route with all parameters, which are inherited by the child routes if they are not overwritten.
+route:
+  receiver: 'null'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  routes:
+    # Finance alerts → Finance Slack channel
+    - match:
+        team: finance
+      receiver: slack-finance
+      group_wait: 10s
+      repeat_interval: 1h
+
+    # Backend/Performance alerts → Engineering Slack channel
+    - match:
+        team: backend
+      receiver: slack-backend
+      group_wait: 10s
+      repeat_interval: 1h
+
+    # Product/Growth alerts → Product Slack channel
+    - match:
+        team: product
+      receiver: slack-product
+      group_wait: 5m
+      repeat_interval: 2h
+
+    # Infrastructure alerts → Infrastructure Slack channel + Teams
+    - match:
+        team: infra
+      receiver: slack-infra
+      group_wait: 5s
+      repeat_interval: 30m
+      continue: true  # Also send to Teams for critical
+
+# Receivers (notification targets)
+receivers:
+  - name: 'null'
+
+  # Slack channels
+  - name: slack-finance
+    slack_configs:
+      - channel: '#terra-finance-alerts'
+        title: '[TERRA Finance] {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+
+  - name: slack-backend
+    slack_configs:
+      - channel: '#terra-backend-alerts'
+        title: '[TERRA Backend] {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+
+  - name: slack-product
+    slack_configs:
+      - channel: '#terra-product-alerts'
+        title: '[TERRA Product] {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+
+  - name: slack-infra
+    slack_configs:
+      - channel: '#terra-infra-alerts'
+        title: '[TERRA Infrastructure] {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+
+# Inhibition rules: suppress alerts based on other alerts
+inhibit_rules:
+  # Don't send low-severity alerts if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'team']
+
+  # Don't alert on high latency if backend is down
+  - source_match:
+      alertname: 'PrometheusTargetDown'
+    target_match:
+      alertname: 'HighEndpointLatency'
+    equal: ['job']

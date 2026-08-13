@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch TERRA X CHANGE backend",
+      "type": "pwa-node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/TERRA X CHANGE/backend",
+      "program": "${workspaceFolder}/TERRA X CHANGE/backend/dist/main.js",
+      "preLaunchTask": "Build TERRA X CHANGE backend",
+      "runtimeExecutable": "node",
+      "outFiles": [
+        "${workspaceFolder}/TERRA X CHANGE/backend/dist/**/*.js"
+      ],
+      "sourceMaps": true
+    },
+    {
+      "name": "Debug wallet E2E script",
+      "type": "pwa-node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/tests/e2e/performance.example.ts",
+      "runtimeExecutable": "node",
+      "args": [
+        "--loginUrl=http://localhost:3000/auth/login",
+        "--protectedUrl=http://localhost:3000/users",
+        "--email=admin@example.com",
+        "--password=password"
+      ]
+    }
+  ]
+}

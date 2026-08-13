@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERRA LINK Backend - Arquitectura & Diagramas</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 4px solid #764ba2;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 30px;
+            border-bottom: 1px solid #e0e0e0;
+            margin: 20px;
+            border-radius: 8px;
+        }
+
+        .toc h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .toc ul {
+            list-style: none;
+            columns: 2;
+            gap: 30px;
+        }
+
+        .toc li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .toc li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .toc a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        main {
+            padding: 40px;
+        }
+
+        section {
+            margin-bottom: 60px;
+            page-break-inside: avoid;
+        }
+
+        section h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        section h3 {
+            color: #764ba2;
+            font-size: 1.3em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .diagram-container {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .description {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+
+        .description strong {
+            color: #2980b9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9em;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table tbody tr:hover {
+            background: #f0f4ff;
+            transition: background 0.2s;
+        }
+
+        table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .summary-box h4 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .info-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .info-card h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-card p {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .badge.admin {
+            background: #9B59B6;
+        }
+
+        .badge.security {
+            background: #E74C3C;
+        }
+
+        .badge.compliance {
+            background: #27AE60;
+        }
+
+        .badge.finance {
+            background: #F39C12;
+        }
+
+        footer {
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .diagram-container {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            section {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            header {
+                page-break-after: avoid;
+            }
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .highlight {
+            background: #fffacd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏗️ TERRA LINK Backend</h1>
+            <p>Arquitectura de Módulos, Controladores y Flujos de API</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Generado: 29 de junio de 2026 | NestJS v10 + TypeORM + RBAC</p>
+        </header>
+
+        <nav class="toc">
+            <h2>📑 Tabla de Contenidos</h2>
+            <ul>
+                <li><a href="#overview">1. Visión General</a></li>
+                <li><a href="#module-arch">2. Arquitectura de Módulos</a></li>
+                <li><a href="#request-flow">3. Flujo de Petición HTTP</a></li>
+                <li><a href="#rbac-matrix">4. Matriz RBAC de Roles</a></li>
+                <li><a href="#compliance-internals">5. Compliance Module Internals</a></li>
+                <li><a href="#endpoint-reference">6. Referencia de Endpoints</a></li>
+                <li><a href="#integration-patterns">7. Patrones de Integración</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <!-- SECTION 1: OVERVIEW -->
+            <section id="overview">
+                <h2>🎯 Visión General del Backend</h2>
+                
+                <div class="description">
+                    <strong>TERRA LINK Backend</strong> es una aplicación NestJS modular que expone un conjunto de APIs REST 
+                    para gestionar compliance, créditos, facturación, tenants y validaciones geoespaciales. 
+                    Utiliza <strong>TypeORM</strong> para persistencia con PostgreSQL y <strong>RBAC (Role-Based Access Control)</strong> 
+                    para securizar endpoints según roles de usuario.
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>🔧 Stack Tecnológico</h4>
+                        <p><strong>Framework:</strong> NestJS v10<br>
+                        <strong>ORM:</strong> TypeORM<br>
+                        <strong>BD:</strong> PostgreSQL<br>
+                        <strong>Auth:</strong> JWT + RBAC Guards</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>📦 Módulos Principales</h4>
+                        <p>10 módulos independientes + Compliance con subcontroladores especializados</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🔐 Seguridad</h4>
+                        <p><strong>Global:</strong> TenantMiddleware<br>
+                        <strong>Guards:</strong> JwtAuthGuard + RbacGuard<br>
+                        <strong>Validación:</strong> Por endpoint</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🔗 Integraciones</h4>
+                        <p>Trace, GUI, MAG, Satellite APIs<br>
+                        Stripe Webhooks<br>
+                        Smart Contracts</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: MODULE ARCHITECTURE -->
+            <section id="module-arch">
+                <h2>🏢 Arquitectura de Módulos</h2>
+
+                <div class="description">
+                    El backend sigue una arquitectura modular donde cada dominio de negocio 
+                    es un módulo independiente importado por <span class="highlight">AppModule</span>. 
+                    Esto permite escalabilidad y mantenimiento independiente de cada feature.
+                </div>
+
+                <div class="diagram-container">
+                    <div class="mermaid">
+graph TB
+    AppModule["🏢 AppModule<br/>(app.module.ts)"]
+    
+    ConfigModule["⚙️ ConfigModule"]
+    TypeOrmModule["🗄️ TypeOrmModule<br/>(PostgreSQL)"]
+    TenantMiddleware["🔐 TenantMiddleware<br/>(Global)"]
+    
+    AppModule --> ConfigModule
+    AppModule --> TypeOrmModule
+    AppModule --> TenantMiddleware
+    
+    AppModule --> AuthModule["🔑 AuthModule"]
+    AppModule --> UserModule["👥 UserModule"]
+    AppModule --> TenantModule["🏛️ TenantModule"]
+    AppModule --> BillingModule["💳 BillingModule"]
+    AppModule --> CreditModule["💰 CreditModule"]
+    AppModule --> CreditSmartContractModule["⛓️ CreditSmartContractModule"]
+    AppModule --> GeoModule["📍 GeoModule"]
+    AppModule --> NftModule["🖼️ NftModule"]
+    AppModule --> PlotModule["🌾 PlotModule"]
+    AppModule --> ComplianceModule["✅ ComplianceModule"]
+    
+    AuthModule --> AuthCtrl["POST /auth/login"]
+    
+    UserModule --> UserCtrl["👤 UserController<br/>GET|POST|PUT"]
+    UserCtrl --> UserRoutes["GET /users<br/>GET /users/:id<br/>POST /users<br/>PUT /users/:id"]
+    
+    TenantModule --> TenantCtrl["🏢 TenantController"]
+    TenantCtrl --> TenantRoutes["GET /tenants<br/>GET /tenants/:id<br/>POST /tenants<br/>PUT /tenants/:id"]
+    
+    BillingModule --> BillingCtrl["💳 BillingController"]
+    BillingCtrl --> BillingRoutes["POST /billing/subscribe<br/>POST /billing/charge<br/>GET /billing/account<br/>GET /billing/invoices<br/>POST /billing/webhook"]
+    
+    CreditModule --> CreditCtrl["💰 CreditController"]
+    CreditCtrl --> CreditRoutes["POST /credit/proposal<br/>GET /credit/dynamic/:tokenId<br/>POST /credit/evaluate/:tokenId<br/>GET /credit/proposals/:borrowerId<br/>PATCH /credit/proposal/:id/status"]
+    
+    GeoModule --> GeoCtrl["📍 GeoController"]
+    GeoCtrl --> GeoRoutes["POST /geo/validate"]
+    
+    ComplianceModule --> ComplianceProvider["🔗 TraceAdapter<br/>TraceService<br/>GuiAdapterService<br/>MagAdapterService<br/>SatelliteAdapterService<br/>SatelliteValidationService"]
+    
+    ComplianceModule --> ComplianceCtrl["✅ ComplianceController<br/>⚖️ /compliance"]
+    ComplianceModule --> CertCtrl["📋 CertificationController<br/>📋 /certifications"]
+    ComplianceModule --> EudrCtrl["🌍 EudrRegistryController<br/>🌍 /eudr"]
+    ComplianceModule --> EsgCtrl["♻️ EsgReportController<br/>♻️ /esg-reports"]
+    
+    ComplianceCtrl --> ComplRoutes["POST /compliance/certifications<br/>GET /compliance/certifications/:id<br/>POST /compliance/eudr<br/>GET /compliance/eudr/:traceId<br/>POST /compliance/satellite-validation<br/>POST /compliance/esg-reports"]
+    
+    style AppModule fill:#4A90E2,color:#fff,stroke:#2E5C8A,stroke-width:3px
+    style TenantMiddleware fill:#E74C3C,color:#fff,stroke:#C0392B,stroke-width:2px
+    style AuthModule fill:#9B59B6,color:#fff
+    style ComplianceModule fill:#27AE60,color:#fff,stroke:#1E8449,stroke-width:2px
+    style ComplianceCtrl fill:#27AE60,color:#fff
+    style CertCtrl fill:#27AE60,color:#fff
+    style EudrCtrl fill:#27AE60,color:#fff
+    style EsgCtrl fill:#27AE60,color:#fff
+                    </div>
+                </div>
+
+                <h3>Características Clave</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>Modularidad</h4>
+                        <p>Cada módulo es independiente y reutilizable. Importados en AppModule.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>Middleware Global</h4>
+                        <p>TenantMiddleware se aplica a todas las rutas para inyectar tenant_id.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>TypeORM Integration</h4>
+                        <p>Cada módulo importa sus entidades vía TypeOrmModule.forFeature().</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>Compliance Specialists</h4>
+                        <p>ComplianceModule contiene 4 sub-controladores especializados.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: REQUEST FLOW -->
+            <section id="request-flow">
+                <h2>🔄 Flujo de Petición HTTP</h2>
+
+                <div class="description">
+                    Cada petición HTTP pasa por un pipeline de guardias, middleware y validaciones 
+                    antes de llegar al controlador y su servicio asociado.
+                </div>
+
+                <div class="diagram-container">
+                    <div class="mermaid">
+graph LR
+    Client["👤 Cliente HTTP"]
+    
+    Client -->|GET/POST /endpoint| TenantMW["🔐 TenantMiddleware<br/>(Inyecta tenant_id)"]
+    
+    TenantMW -->|Request| JwtGuard["🔑 JwtAuthGuard<br/>(Valida JWT token)"]
+    
+    JwtGuard -->|OK| RbacGuard["⚙️ RbacGuard<br/>(Valida Roles RBAC)"]
+    
+    RbacGuard -->|Rol ✓| Controller["🎯 Controller<br/>(auth, billing, compliance...)"]
+    
+    RbacGuard -->|Rol ✗| Forbidden["❌ 403 Forbidden"]
+    
+    JwtGuard -->|Token ✗| Unauthorized["❌ 401 Unauthorized"]
+    
+    Controller -->|Business Logic| Service["⚙️ Service"]
+    
+    Service -->|Query/Command| TypeORM["🗄️ TypeORM Repository<br/>(PostgreSQL)"]
+    
+    Service -->|External Call| Adapter["🔗 Adapter<br/>(TraceAdapter, GUI, MAG, etc)"]
+    
+    TypeORM -->|Entities| Service
+    Adapter -->|Data| Service
+    
+    Service -->|Result| Controller
+    
+    Controller -->|Response DTO| Client
+    
+    Forbidden -->|Error| Client
+    Unauthorized -->|Error| Client
+    
+    style Client fill:#FFD700,color:#000,stroke:#FFA500,stroke-width:2px
+    style TenantMW fill:#E74C3C,color:#fff,stroke:#C0392B,stroke-width:2px
+    style JwtGuard fill:#9B59B6,color:#fff
+    style RbacGuard fill:#3498DB,color:#fff
+    style Controller fill:#27AE60,color:#fff
+    style Service fill:#F39C12,color:#fff
+    style TypeORM fill:#1ABC9C,color:#fff
+    style Adapter fill:#34495E,color:#fff
+    style Forbidden fill:#E74C3C,color:#fff
+    style Unauthorized fill:#E74C3C,color:#fff
+                    </div>
+                </div>
+
+                <h3>Etapas del Pipeline</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>1️⃣ TenantMiddleware</h4>
+                        <p>Se aplica globalmente. Extrae tenant_id del header o contexto y lo inyecta en el request.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>2️⃣ JwtAuthGuard</h4>
+                        <p>Valida que el JWT token sea válido y no esté expirado. Rechaza con 401 si falla.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>3️⃣ RbacGuard</h4>
+                        <p>Verifica que el usuario tiene el rol requerido para el endpoint. Rechaza con 403 si no.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>4️⃣ Controller</h4>
+                        <p>Recibe DTO validado. Delega lógica al Service.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>5️⃣ Service</h4>
+                        <p>Ejecuta lógica de negocio. Accede a repositorios TypeORM y adaptadores externos.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>6️⃣ Response</h4>
+                        <p>Servicio retorna resultado. Controller mapea a DTO y devuelve al cliente.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: RBAC MATRIX -->
+            <section id="rbac-matrix">
+                <h2>🔐 Matriz RBAC de Roles y Permisos</h2>
+
+                <div class="description">
+                    TERRA LINK Backend utiliza 6 roles principales que controlan el acceso a diferentes endpoints. 
+                    Cada endpoint declara sus roles permitidos mediante el decorador <span class="highlight">@Roles()</span>.
+                </div>
+
+                <div class="diagram-container">
+                    <div class="mermaid">
+graph TB
+    Admin["👑 admin"]
+    Exportador["📤 exportador"]
+    Banco["🏦 banco"]
+    Productor["🌾 productor"]
+    Merchant["🛍️ merchant"]
+    Producer["🚜 producer"]
+    
+    Admin --> Auth["✓ Auth (login)"]
+    Admin --> Users["✓ Users (CRUD)"]
+    Admin --> Tenants["✓ Tenants (CRUD)"]
+    Admin --> Billing["✓ Billing (subscribe, charge)"]
+    Admin --> Credit["✓ Credit (proposal, evaluate)"]
+    Admin --> Geo["✓ Geo (validate)"]
+    Admin --> CompA["✓ Compliance"]
+    Admin --> CertA["✓ Certifications"]
+    Admin --> EudrA["✓ EUDR Registry"]
+    Admin --> EsgA["✓ ESG Reports"]
+    Admin --> SatA["✓ Satellite Validation"]
+    
+    Exportador --> CertB["✓ Certifications (create, read)"]
+    Exportador --> EudrB["✓ EUDR Registry (register, read)"]
+    Exportador --> EsgB["✓ ESG Reports (read)"]
+    
+    Banco --> Credit
+    Banco --> CertC["✓ Certifications (read)"]
+    Banco --> EudrC["✓ EUDR Registry (read)"]
+    Banco --> EsgC["✓ ESG Reports (generate, read)"]
+    
+    Productor --> SatB["✓ Satellite Validation"]
+    Productor --> GeoB["✓ Geo (validate)"]
+    
+    Merchant --> BillingA["✓ Billing (account, invoices)"]
+    Producer --> BillingB["✓ Billing (account, invoices)"]
+    
+    style Admin fill:#9B59B6,color:#fff,stroke:#6C3483,stroke-width:2px
+    style Exportador fill:#27AE60,color:#fff
+    style Banco fill:#3498DB,color:#fff
+    style Productor fill:#F39C12,color:#fff
+    style Merchant fill:#E74C3C,color:#fff
+    style Producer fill:#E67E22,color:#fff
+                    </div>
+                </div>
+
+                <h3>Descripción de Roles</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4><span class="badge admin">admin</span></h4>
+                        <p>Acceso total a todos los endpoints. Gestión de usuarios, tenants, compliance, facturación.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="badge compliance">exportador</span></h4>
+                        <p>Registro de certifications, EUDR y ESG reports. Lectura de compliance data.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="badge finance">banco</span></h4>
+                        <p>Evaluación de propuestas de crédito, lectura de compliance, generación de ESG reports.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="badge">productor</span></h4>
+                        <p>Validación de parcelas geoespaciales y validaciones satelitales.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="badge finance">merchant</span></h4>
+                        <p>Acceso de solo lectura a billing account e invoices.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><span class="badge finance">producer</span></h4>
+                        <p>Acceso a billing account e invoices como merchant.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 5: COMPLIANCE INTERNALS -->
+            <section id="compliance-internals">
+                <h2>✅ Compliance Module - Internals</h2>
+
+                <div class="description">
+                    El módulo de Compliance es el más complejo del backend. Contiene 4 controladores especializados,
+                    múltiples servicios internos y adaptadores para integraciones externas.
+                </div>
+
+                <div class="diagram-container">
+                    <div class="mermaid">
+graph TB
+    CompMod["✅ ComplianceModule"]
+    
+    CompMod --> TypeOrmF["TypeOrmModule.forFeature<br/>Certification | EudrRegistry<br/>EsgReport | Plot<br/>SatelliteValidation"]
+    
+    CompMod --> AuthMod["🔑 AuthModule"]
+    
+    CompMod --> Service["⚙️ ComplianceService<br/>(Main business logic)"]
+    
+    CompMod --> Adapters["🔗 Adapters"]
+    
+    Adapters --> TraceA["TraceAdapter"]
+    Adapters --> GuiA["GuiAdapterService"]
+    Adapters --> MagA["MagAdapterService"]
+    Adapters --> SatA["SatelliteAdapterService"]
+    
+    CompMod --> InternalSvcs["🔧 Internal Services"]
+    InternalSvcs --> TraceS["TraceService"]
+    InternalSvcs --> SatVS["SatelliteValidationService"]
+    
+    CompMod --> Controllers["🎯 Controllers"]
+    
+    Controllers --> CompCtrl["ComplianceController<br/>/compliance"]
+    Controllers --> CertCtrl["CertificationController<br/>/certifications"]
+    Controllers --> EudrCtrl["EudrRegistryController<br/>/eudr"]
+    Controllers --> EsgCtrl["EsgReportController<br/>/esg-reports"]
+    
+    CompCtrl --> Service
+    CertCtrl --> Service
+    EudrCtrl --> Service
+    EsgCtrl --> Service
+    
+    Service --> TraceA
+    Service --> GuiA
+    Service --> MagA
+    Service --> SatA
+    Service --> TraceS
+    Service --> SatVS
+    
+    TraceA -.-> ExternalTrace["🌐 External Trace API"]
+    GuiA -.-> ExternalGui["🌐 External GUI API"]
+    MagA -.-> ExternalMag["🌐 External MAG API"]
+    SatA -.-> ExternalSat["🌐 External Satellite API"]
+    
+    style CompMod fill:#27AE60,color:#fff,stroke:#1E8449,stroke-width:3px
+    style Service fill:#F39C12,color:#fff
+    style Adapters fill:#34495E,color:#fff
+    style InternalSvcs fill:#2980B9,color:#fff
+    style Controllers fill:#27AE60,color:#fff
+    style ExternalTrace fill:#95A5A6,color:#fff
+    style ExternalGui fill:#95A5A6,color:#fff
+    style ExternalMag fill:#95A5A6,color:#fff
+    style ExternalSat fill:#95A5A6,color:#fff
+                    </div>
+                </div>
+
+                <h3>Componentes Principales</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Componente</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>ComplianceService</strong></td>
+                            <td>Service</td>
+                            <td>Lógica central de compliance. Orquesta adapters y servicios internos.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TraceAdapter</strong></td>
+                            <td>Adapter</td>
+                            <td>Integración con Trace API para trazabilidad de productos.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>GuiAdapterService</strong></td>
+                            <td>Adapter</td>
+                            <td>Interfaz con sistema de gestión uniforme externo.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MagAdapterService</strong></td>
+                            <td>Adapter</td>
+                            <td>Integración con plataforma MAG (Modular Agriculture Gateway).</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SatelliteAdapterService</strong></td>
+                            <td>Adapter</td>
+                            <td>Consulta imágenes satelitales y datos geoespaciales.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TraceService</strong></td>
+                            <td>Internal Service</td>
+                            <td>Procesa y almacena datos de trazabilidad internamente.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SatelliteValidationService</strong></td>
+                            <td>Internal Service</td>
+                            <td>Valida parcelas mediante análisis satelital y datos geoespaciales.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Sub-Controladores</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Controlador</th>
+                            <th>Prefijo</th>
+                            <th>Responsabilidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>ComplianceController</strong></td>
+                            <td>/compliance</td>
+                            <td>Endpoint aggregado con rutas para certifications, EUDR, satélite y ESG.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CertificationController</strong></td>
+                            <td>/certifications</td>
+                            <td>CRUD de certifications. Creación y lectura con RBAC.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>EudrRegistryController</strong></td>
+                            <td>/eudr</td>
+                            <td>Registro y consulta de EUDR (European Union Deforestation Regulation).</td>
+                        </tr>
+                        <tr>
+                            <td><strong>EsgReportController</strong></td>
+                            <td>/esg-reports</td>
+                            <td>Generación y consulta de reportes ESG (Environmental, Social, Governance).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- SECTION 6: ENDPOINT REFERENCE -->
+            <section id="endpoint-reference">
+                <h2>📚 Referencia Completa de Endpoints</h2>
+
+                <div class="description">
+                    Tabla consolidada de todos los endpoints disponibles con sus métodos HTTP, 
+                    rutas, guardias y roles requeridos.
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Módulo</th>
+                            <th>Controlador</th>
+                            <th>Prefijo</th>
+                            <th>Roles</th>
+                            <th>Endpoints</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge admin">Auth</span></td>
+                            <td>AuthController</td>
+                            <td>/auth</td>
+                            <td>ninguno</td>
+                            <td>POST /login</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">Users</span></td>
+                            <td>UserController</td>
+                            <td>/users</td>
+                            <td>admin</td>
+                            <td>GET / GET :id / POST / PUT :id</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">Tenants</span></td>
+                            <td>TenantController</td>
+                            <td>/tenants</td>
+                            <td>admin</td>
+                            <td>GET / GET :id / POST / PUT :id</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge finance">Billing</span></td>
+                            <td>BillingController</td>
+                            <td>/billing</td>
+                            <td>admin, merchant, producer, bank</td>
+                            <td>POST /subscribe | POST /charge | GET /account | GET /invoices | POST /cancel | POST /webhook</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge finance">Credit</span></td>
+                            <td>CreditController</td>
+                            <td>/credit</td>
+                            <td>banco, admin</td>
+                            <td>POST /proposal | GET /dynamic/:tokenId | POST /evaluate/:tokenId | GET /proposals/:borrowerId | PATCH /proposal/:id/status</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">Geo</span></td>
+                            <td>GeoController</td>
+                            <td>/geo</td>
+                            <td>productor, admin</td>
+                            <td>POST /validate</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="4"><span class="badge compliance">Compliance</span></td>
+                            <td>ComplianceController</td>
+                            <td>/compliance</td>
+                            <td>varies</td>
+                            <td>POST /certifications | GET /certifications/:id | GET /certifications | POST /eudr | GET /eudr/:traceId | POST /eudr/:traceId/sync | POST /satellite-validation | POST /esg-reports | GET /esg-reports/:id</td>
+                        </tr>
+                        <tr>
+                            <td>CertificationController</td>
+                            <td>/certifications</td>
+                            <td>admin, exportador, banco</td>
+                            <td>POST / GET :id / GET</td>
+                        </tr>
+                        <tr>
+                            <td>EudrRegistryController</td>
+                            <td>/eudr</td>
+                            <td>admin, exportador, banco</td>
+                            <td>POST / GET :traceId</td>
+                        </tr>
+                        <tr>
+                            <td>EsgReportController</td>
+                            <td>/esg-reports</td>
+                            <td>admin, banco, exportador</td>
+                            <td>POST / GET :id</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- SECTION 7: INTEGRATION PATTERNS -->
+            <section id="integration-patterns">
+                <h2>🔗 Patrones de Integración</h2>
+
+                <div class="description">
+                    El backend se integra con múltiples sistemas externos a través de adaptadores especializados.
+                    Estos patrones aseguran desacoplamiento y facilidad de mantenimiento.
+                </div>
+
+                <h3>1. Patrón Adapter para APIs Externas</h3>
+                <div class="summary-box">
+                    <h4>Trace API Adapter</h4>
+                    <p>TraceAdapter encapsula la comunicación con el sistema de trazabilidad. 
+                    ComplianceService lo utiliza para validar y registrar cadena de suministro.</p>
+                </div>
+
+                <div class="summary-box">
+                    <h4>Satellite API Adapter</h4>
+                    <p>SatelliteAdapterService consulta imágenes satelitales para validar parcelas. 
+                    SatelliteValidationService procesa los datos y almacena validaciones en BD.</p>
+                </div>
+
+                <h3>2. Patrón Repository para Persistencia</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>TypeORM Repositories</h4>
+                        <p>Cada entidad (Certification, EudrRegistry, EsgReport, etc.) tiene su repositorio inyectado 
+                        vía TypeOrmModule.forFeature().</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>Entity Relationships</h4>
+                        <p>Las entidades definen relaciones OneToMany, ManyToOne para mantener integridad referencial.</p>
+                    </div>
+                </div>
+
+                <h3>3. Guardias y Middleware</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>TenantMiddleware</h4>
+                        <p><strong>Aplicación:</strong> Global<br>
+                        <strong>Función:</strong> Inyecta tenant_id en request context<br>
+                        <strong>Propósito:</strong> Garantizar multi-tenancy</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>JwtAuthGuard</h4>
+                        <p><strong>Aplicación:</strong> Selectiva por módulo<br>
+                        <strong>Función:</strong> Valida JWT token<br>
+                        <strong>Propósito:</strong> Autenticación segura</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>RbacGuard</h4>
+                        <p><strong>Aplicación:</strong> Selectiva por endpoint<br>
+                        <strong>Función:</strong> Valida roles (@Roles decorator)<br>
+                        <strong>Propósito:</strong> Control de acceso basado en roles</p>
+                    </div>
+                </div>
+
+                <h3>4. Inyección de Dependencias</h3>
+                <div class="info-card">
+                    <h4>NestJS Dependency Injection Container</h4>
+                    <p>Todos los servicios, adapters y repositorios se inyectan automáticamente en controladores 
+                    mediante decoradores @Injectable() y constructor parameters. Esto permite:</p>
+                    <ul style="margin-top: 10px;">
+                        <li>✓ Desacoplamiento de componentes</li>
+                        <li>✓ Facilidad para testing con mocks</li>
+                        <li>✓ Escalabilidad y mantenimiento</li>
+                        <li>✓ Reutilización de servicios entre módulos</li>
+                    </ul>
+                </div>
+
+                <h3>5. Flujo Típico de una Petición Compliance</h3>
+                <div class="summary-box">
+                    <h4>Ejemplo: POST /compliance/certifications</h4>
+                    <p>
+                        1. Cliente envía POST con CreateCertificationDto<br>
+                        2. TenantMiddleware inyecta tenant_id<br>
+                        3. JwtAuthGuard valida token<br>
+                        4. RbacGuard valida rol (admin | exportador)<br>
+                        5. ComplianceController.createCertification() recibe DTO<br>
+                        6. ComplianceService.createCertification() ejecuta lógica:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;- Consulta GUI/MAG adapters si es necesario<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;- Persiste Certification entity en BD<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;- Retorna CertificationDto<br>
+                        7. Controller retorna response 201 Created al cliente
+                    </p>
+                </div>
+            </section>
+
+            <!-- SUMMARY SECTION -->
+            <section>
+                <h2>📋 Resumen Ejecutivo</h2>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>🏗️ Arquitectura</h4>
+                        <p><strong>Patrón:</strong> Modular + Service + Repository<br>
+                        <strong>Framework:</strong> NestJS v10<br>
+                        <strong>ORM:</strong> TypeORM<br>
+                        <strong>BD:</strong> PostgreSQL</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>📦 Módulos</h4>
+                        <p><strong>Independientes:</strong> 10<br>
+                        <strong>Especializado:</strong> ComplianceModule (4 sub-controllers)<br>
+                        <strong>Total Controladores:</strong> 13</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🔐 Seguridad</h4>
+                        <p><strong>Autenticación:</strong> JWT<br>
+                        <strong>Autorización:</strong> RBAC (6 roles)<br>
+                        <strong>Multi-tenancy:</strong> TenantMiddleware</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>🔗 Integraciones</h4>
+                        <p><strong>APIs Externas:</strong> 4+ (Trace, GUI, MAG, Satellite)<br>
+                        <strong>Webhooks:</strong> Stripe<br>
+                        <strong>Smart Contracts:</strong> CreditSmartContractModule</p>
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <h4>✅ Conclusión</h4>
+                    <p>
+                        TERRA LINK Backend es una arquitectura empresarial bien estructurada que separa concerns, 
+                        asegura escalabilidad y mantiene un control estricto de acceso mediante RBAC. 
+                        El módulo de Compliance es robusto con múltiples integraciones y servicios especializados 
+                        para validación geoespacial, trazabilidad y reportes ESG.
+                    </p>
+                </div>
+            </section>
+
+            <!-- APPENDIX -->
+            <section>
+                <h2>📖 Apéndice: Glosario Técnico</h2>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>RBAC</h4>
+                        <p>Role-Based Access Control. Sistema de control de acceso basado en roles de usuario.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>DTO</h4>
+                        <p>Data Transfer Object. Objeto que encapsula datos para transferencia entre capas/servicios.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>Repository Pattern</h4>
+                        <p>Patrón que abstrae el acceso a datos. TypeORM proporciona repositories automáticos.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>Adapter Pattern</h4>
+                        <p>Patrón que encapsula integración con sistemas externos para desacoplamiento.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>Guard</h4>
+                        <p>Middleware en NestJS que ejecuta lógica antes de llegar al handler (auth, roles, etc).</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>Middleware</h4>
+                        <p>Función ejecutada antes de que la petición llegue al controlador. Global o selectiva.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>Service</h4>
+                        <p>Clase que contiene lógica de negocio y es reutilizable entre controladores.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>Tenant</h4>
+                        <p>Aislamiento lógico de datos/usuarios en sistema multi-tenant. Clave para seguridad.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>EUDR</h4>
+                        <p>European Union Deforestation Regulation. Normativa para trazabilidad de productos.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4>ESG</h4>
+                        <p>Environmental, Social, Governance. Criterios de sostenibilidad empresarial.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>🌍 TERRA LINK Backend Documentation | Generado: 29 de junio de 2026</p>
+            <p>Documento de Arquitectura - Confidencial</p>
+        </footer>
+    </div>
+
+    <script>
+        // Configurar Mermaid
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+        mermaid.contentLoaded();
+
+        // Funcionalidad para imprimir/descargar PDF
+        console.log('Para exportar a PDF: File > Print > Save as PDF (o usar navegador)');
+    </script>
+</body>
+</html>

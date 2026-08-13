@@ -1,0 +1,35 @@
+{
+  "name": "@terra/shared",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "default": "./dist/auth/index.js"
+    }
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build"
+  },
+  "description": "Este paquete contiene utilidades, tipos y lógica compartida que pueden reutilizarse en los proyectos de `TERRA GO`, `TERRA LINK` y `TERRA X CHANGE`.",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
